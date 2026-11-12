@@ -1,0 +1,14 @@
+#!/var/jb/bin/sh
+# RoundSwitcher 15 control script
+DIR=/var/mobile/Library/RoundSwitcher15
+mkdir -p "$DIR"
+case "$1" in
+  disable)  echo manual > "$DIR/disable"; chmod 666 "$DIR/disable"; echo "disabled, respringing"; sbreload ;;
+  enable)   rm -f "$DIR/disable" "$DIR/pending" "$DIR/crashcount"; echo "enabled, respringing"; sbreload ;;
+  probe)    echo 1 > "$DIR/probe"; chmod 666 "$DIR/probe"; echo "probe on: respring, open App Switcher, then 'rs15ctl log'"; sbreload ;;
+  dump)     notifyutil -p com.max.roundswitcher15.dump; sleep 1; ls -1t "$DIR"/dump-*.txt 2>/dev/null | head -1 ;;
+  log)      tail -n 60 "$DIR/log.txt" ;;
+  status)   [ -e "$DIR/disable" ] && echo "state: DISABLED ($(cat "$DIR/disable"))" || echo "state: enabled"
+            [ -e "$DIR/crashcount" ] && echo "crash counter: $(cat "$DIR/crashcount")" ;;
+  *)        echo "usage: rs15ctl {disable|enable|probe|dump|log|status}" ;;
+esac

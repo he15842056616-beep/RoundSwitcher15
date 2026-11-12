@@ -1,0 +1,25 @@
+# UNVERIFIED workflow: builds the rootless DEB on a macOS runner.
+name: build-deb
+on: [workflow_dispatch, push]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: brew install ldid dpkg make xz
+      - name: Install Theos + SDKs
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$HOME/theos"
+          git clone --depth=1 https://github.com/theos/sdks.git /tmp/sdks
+          cp -R /tmp/sdks/*.sdk "$HOME/theos/sdks/"
+      - name: Build
+        run: |
+          export THEOS="$HOME/theos"
+          export PATH="$(brew --prefix make)/libexec/gnubin:$PATH"
+          chmod 755 layout/usr/bin/rs15ctl
+          make clean package FINALPACKAGE=1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RoundSwitcher15-deb
+          path: packages/*.deb
